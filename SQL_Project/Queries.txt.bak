@@ -1,0 +1,86 @@
+
+ /* Query 1 - query used for the first insight*/
+
+ 
+ 
+SELECT  f.title film_title, c.name category_name,
+       COUNT(r.rental_id) AS rental_count
+FROM category c
+
+JOIN film_category fc
+ON c.category_id = fc.category_id
+AND c.name IN ('Animation', 'Children', 'Classics', 'Comedy', 'Family', 'Music')
+
+JOIN film f
+ON f.film_id = fc.film_id
+
+JOIN inventory i
+ON f.film_id = i.film_id
+
+JOIN rental r
+ON i.inventory_id = r.inventory_id
+
+GROUP BY  1, 2
+ORDER BY  2, 1;
+
+
+   
+ 
+ 
+ 
+ /* Query 2 - the query used for the second insight*/
+ 
+ 
+    
+   SELECT film_name, category, rental_duration, NTILE(4) OVER (ORDER BY rental_duration) AS standard_quartile
+   
+     FROM
+      (SELECT f.title AS film_name, c.name AS category, SUM(f.rental_duration) AS rental_duration
+        FROM film_category c
+           JOIN film_category fc
+           ON c.category_id = fc.category_id
+           JOIN film f
+           ON f.film_id = fc.film_id
+      GROUP BY 1,2
+      HAVING c.name IN ('Animation', 'Children', 'Classics', 'Comedy', 'Family', 'Music')) t1;
+		 
+	
+
+  
+/* Query 3 - the query used for the fourth insight */
+
+SELECT Rental_month, Rental_year, Store_ID, COUNT(*) Count_Rentals
+
+   FROM
+    (SELECT s.store_id Store_ID, rental_date Rental_date,
+           DATE_PART ('month', rental_date) AS Rental_month,
+           DATE_PART ('year', rental_date)  AS Rental_year
+		   
+       FROM store s 
+       JOIN staff st
+       ON s.store_id = st.store_id
+       JOIN rental r
+       ON r.staff_id = st.staff_id) t1
+	   
+   GROUP BY 1, 2, 3
+   ORDER BY 4 DESC;
+
+
+
+/* Query 4 - the query used for the fifth insight*/
+  
+   SELECT pay_month, fullname, COUNT(*) Pay_countpermonth, SUM(Pay_amount) Pay_amount
+
+    FROM
+          (SELECT c.first_name, c.last_name, P.payment_date,
+                 c.first_name ||' '|| c.last_name AS fullname,
+                 DATE_TRUNC ('month', p.payment_date) pay_month,
+                 p.amount Pay_amount
+            FROM customer c
+            JOIN payment p 
+            ON c.customer_id = p.customer_id)t1
+   GROUP BY 1,2
+   ORDER BY 4 DESC
+   LIMIT 10;
+
+
